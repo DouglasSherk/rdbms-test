@@ -33,17 +33,16 @@ if RDBMS_DEBUG is not None and RDBMS_DEBUG not in TESTS_PATHS:
 
 SHUTDOWN_TESTS = ['test01', 'test02', 'test10', 'test18', 'test19', 'test24', 'test25', 'test30']
 
-PARALLEL_PERF_REFERENCE_TEST = 'test06'
+PARALLEL_PERF_REFERENCE_TEST = 'test11'
 
-PARALLEL_PERF_FUZZ = 0.1
+PARALLEL_PERF_FUZZ = 1.2
 
 PARALLEL_PERF_TESTS = {
-    'test11': 0.8,
-    'test12': 0.7,
-    'test13': 0.65,
-    'test14': 1.0,
-    'test15': 0.9,
-    'test16': 0.8,
+    'test12': 1.2,
+    'test13': 1.2,
+    'test14': 2.0,
+    'test15': 2.2,
+    'test16': 13.0,
 }
 
 TESTS_PATH = os.path.join(RDBMS_ROOT, TESTS_PATHS[RDBMS_DEBUG])
@@ -170,7 +169,7 @@ def check_performance(test_file, test_time):
 
     expected_time_mul = PARALLEL_PERF_TESTS[test_file]
     expected_time = parallel_perf_reference_time * expected_time_mul
-    if test_time > expected_time + PARALLEL_PERF_FUZZ:
+    if test_time > expected_time * PARALLEL_PERF_FUZZ:
         print_failure(test_file,
                       test_time,
                       'Expected to take %d ms at most (%s * %.2f); did you implement parallel scanning?' %
