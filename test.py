@@ -215,6 +215,14 @@ for test_file in test_files:
         print_failure(test_file, test_time, 'Client should have shut down, but did not')
         break
 
+    if client.poll() != 0:
+        print_failure(test_file, test_time, 'Client exited with code %d' % client.poll())
+        break
+
+    if server.poll() not in [None, 0]:
+        print_failure(test_file, test_time, 'Server exited with code %d' % server.poll())
+        break
+
     reference_path = os.path.join(TESTS_PATH, '%s.exp' % test_file)
 
     if not os.path.exists(reference_path):
