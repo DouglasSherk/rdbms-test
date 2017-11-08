@@ -233,12 +233,18 @@ for test_file in test_files:
 
         if next(diffs, None) is not None:
             reason = ''
+            line_count = 0
             for line in diffs:
                 for prefix in ('---', '+++', '@@'):
                     if line.startswith(prefix):
                         break
                 else:
                     reason = reason + line + '\n'
+
+                line_count += 1
+                if line_count >= 50:
+                    break
+
             print_failure(test_file, test_time, reason)
             print('')
             break
