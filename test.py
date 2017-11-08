@@ -33,16 +33,12 @@ if RDBMS_DEBUG is not None and RDBMS_DEBUG not in TESTS_PATHS:
 
 SHUTDOWN_TESTS = ['test01', 'test02', 'test10', 'test18', 'test19', 'test24', 'test25', 'test30']
 
-PARALLEL_PERF_REFERENCE_TEST = 'test11'
+PARALLEL_PERF_REFERENCE_TEST = 'test16'
 
 PARALLEL_PERF_FUZZ = 1.2
 
 PARALLEL_PERF_TESTS = {
-    'test12': 1.2,
-    'test13': 1.2,
-    'test14': 2.0,
-    'test15': 2.2,
-    'test16': 13.0,
+    'test17': 0.4,
 }
 
 TESTS_PATH = os.path.join(RDBMS_ROOT, TESTS_PATHS[RDBMS_DEBUG])
