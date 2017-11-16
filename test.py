@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import subprocess
 import os
 import difflib
@@ -38,7 +40,7 @@ PARALLEL_PERF_REFERENCE_TEST = 'test16'
 PARALLEL_PERF_FUZZ = 1.2
 
 PARALLEL_PERF_TESTS = {
-    'test17': 0.4,
+    'test17': 0.5,
 }
 
 TESTS_PATH = os.path.join(RDBMS_ROOT, TESTS_PATHS[RDBMS_DEBUG])
