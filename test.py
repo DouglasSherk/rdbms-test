@@ -12,6 +12,7 @@ import argparse
 parser = argparse.ArgumentParser(description='Runs tests for RDBMS')
 parser.add_argument('--start', type=int, default=1, choices=range(1, 42), help='the test at which to start')
 parser.add_argument('--end', type=int, default=41, choices=range(1, 42), help='the test at which to end')
+parser.add_argument('--timing-only', action='store_true', help='output only times; continue on when tests fail')
 parser.add_argument('path', nargs='*', default='.', help='the root project directory from which to run the tests')
 args = parser.parse_args()
 
@@ -107,7 +108,7 @@ sys.stdout.write('---\n')
 sys.stdout.write(BOLD + 'Welcome to rdbms-test.\n' + RESET)
 sys.stdout.write('Copyleft Douglas Sherk, 2017. Licensed under GPL v2. See LICENSE file for details.\n')
 sys.stdout.write('---\n\n')
-sys.stdout.write('Your current working directory is ' + RDBMS_ROOT + '\n')
+sys.stdout.write('Your current working directory is ' + os.path.abspath(RDBMS_ROOT) + '\n')
 sys.stdout.write('\n')
 sys.stdout.write('    Optional environment variables:\n')
 sys.stdout.write('    - RDBMS_DEBUG: 0, 1 - run tests from "$RDBMS_ROOT/project_tests"\n')
@@ -128,20 +129,28 @@ if not RUN_PERF_TESTS:
     sys.stdout.write('Performance tests are ' + RED + 'disabled' + RESET + '.\n\n')
     sys.stdout.flush()
 
+if args.timing_only:
+    sys.stdout.write(CYAN + 'NOTICE:' + RESET + ' Tests running in timing-only mode.\n')
+    sys.stdout.write('Failure reports will be truncated, and failing tests will not end the tests.\n\n')
+    sys.stdout.flush()
+
 def strip_commented_lines(text):
     return [x for x in text if not x.startswith('--')]
 
 def print_failure(test_file, time, reason):
-    sys.stdout.write('[' + RED + 'FAIL' + RESET + '] ' + test_file + '.dsl in ' + str(time) + ' ms\n\n')
+    color = RED if not args.timing_only else BLUE
+    sys.stdout.write('[' + color + 'FAIL' + RESET + '] ' + test_file + '.dsl in ' + str(time) + ' ms\n\n')
     count = 0
     for line in reason.splitlines():
         sys.stdout.write('    ' + line + '\n')
         count += 1
-        if count >= 20:
+        if count >= 20 or args.timing_only:
             sys.stdout.write('\n    ... failure report truncated')
             break
     sys.stdout.write('\n')
     sys.stdout.flush()
+    if not args.timing_only:
+        exit()
 
 def print_success(test_file, time):
     sys.stdout.write('[' + GREEN + 'PASS' + RESET + '] ' + test_file + '.dsl in ' + str(time) + ' ms\n')
@@ -186,13 +195,13 @@ def check_performance(test_file, test_time):
                       test_time,
                       'Expected to take %d ms at most (%s * %.2f); did you implement parallel scanning?' %
                         (expected_time, PARALLEL_PERF_REFERENCE_TEST, expected_time_mul))
-        exit()
 
 current_test = 0
 
 for test_file in test_files:
     current_test += 1
-    if current_test < START_TEST or current_test > END_TEST:
+    # The first test is imperative because it creates the DB.
+    if current_test != 1 and (current_test < START_TEST or current_test > END_TEST):
         continue
 
     if server is None or server.poll() is not None:
@@ -223,22 +232,17 @@ for test_file in test_files:
     if test_file in SHUTDOWN_TESTS:
         if server.poll() is None:
             print_failure(test_file, test_time, 'Server should have shut down, but did not')
-            break
     elif server.poll() is not None:
         print_failure(test_file, test_time, 'Server shut down, but should not have')
-        break
 
     if client.poll() is None:
         print_failure(test_file, test_time, 'Client should have shut down, but did not')
-        break
 
     if client.poll() != 0:
         print_failure(test_file, test_time, 'Client exited with code %d' % client.poll())
-        break
 
     if server.poll() not in [None, 0]:
         print_failure(test_file, test_time, 'Server exited with code %d' % server.poll())
-        break
 
     reference_path = os.path.join(TESTS_PATH, '%s.exp' % test_file)
 
@@ -268,8 +272,6 @@ for test_file in test_files:
                     break
 
             print_failure(test_file, test_time, reason)
-            print('')
-            break
         else:
             if not RUN_PERF_TESTS and test_file in PARALLEL_PERF_TESTS:
                 print_warning(test_file, test_time, ('This is a performance '

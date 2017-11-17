@@ -6,7 +6,7 @@ import random
 import shutil
 
 parser = argparse.ArgumentParser(description='Generates test case data for RDBMS')
-parser.add_argument('--size', choices=('10M', '100M'), help='the size of the dataset')
+parser.add_argument('--size', required=True, choices=('10M', '100M'), help='the size of the dataset')
 parser.add_argument('path', nargs='*', default='.', help='the directory in which to create the tests')
 args = parser.parse_args()
 
@@ -30,4 +30,9 @@ with open(os.path.join(path, 'data1.csv'), 'w') as fp:
 with open(os.path.join(path, 'data2.csv'), 'w') as fp:
     fp.write('db1.tbl2.col1,db1.tbl2.col2,db1.tbl2.col3,db1.tbl2.col4\n')
     for i in range(0, data_size):
-        fp.write('%d,%d,%d,%d\n' % (i, i + 1, i + 2, random.randint(100000000, 200000000)))
+        fp.write('%d,%d,%d,%d\n' % (i, i + 1, i + 2, random.randint(1000000000, 9000000000)))
+
+with open(os.path.join(path, 'data3_batch.csv'), 'w') as fp:
+    fp.write('db1.tbl3.col1,db1.tbl3.col2,db1.tbl3.col3,db1.tbl3.col4\n')
+    for i in range(0, data_size):
+        fp.write('%d,%d,%d,%d\n' % (i, i + 1, i + 2, random.randint(1000000000, 9000000000)))
