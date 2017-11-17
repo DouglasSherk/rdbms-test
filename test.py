@@ -200,8 +200,8 @@ current_test = 0
 
 for test_file in test_files:
     current_test += 1
-    # The first test is imperative because it creates the DB.
-    if current_test != 1 and (current_test < START_TEST or current_test > END_TEST):
+    # The two tests are imperative because they create the DB and load the base data.
+    if current_test not in [1, 2] and (current_test < START_TEST or current_test > END_TEST):
         continue
 
     if server is None or server.poll() is not None:
