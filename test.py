@@ -7,9 +7,19 @@ import sys
 import time
 import atexit
 import datetime
+import argparse
 
-RDBMS_ROOT = os.environ['RDBMS_ROOT'] if 'RDBMS_ROOT' in os.environ else os.getcwd()
+parser = argparse.ArgumentParser(description='Runs tests for RDBMS')
+parser.add_argument('--start', type=int, default=1, choices=range(1, 42), help='the test at which to start')
+parser.add_argument('--end', type=int, default=41, choices=range(1, 42), help='the test at which to end')
+parser.add_argument('path', nargs='*', default='.', help='the root project directory from which to run the tests')
+args = parser.parse_args()
+
+RDBMS_ROOT = args.path[0]
 RDBMS_DEBUG = os.environ['RDBMS_DEBUG'] if 'RDBMS_DEBUG' in os.environ else '0'
+
+START_TEST = args.start
+END_TEST = args.end
 
 RUN_PERF_TESTS = RDBMS_DEBUG in ['2', '3']
 
@@ -25,7 +35,8 @@ TESTS_PATHS = {
     '0': 'project_tests',
     '1': 'project_tests',
     '2': 'project_tests_1M',
-    '3': 'project_tests_100M'
+    '3': 'project_tests_10M',
+    '4': 'project_tests_100M'
 }
 
 if RDBMS_DEBUG is not None and RDBMS_DEBUG not in TESTS_PATHS:
@@ -52,7 +63,7 @@ if not os.path.exists(RDBMS_ROOT):
     sys.stdout.write(RED + 'Project root ' + RDBMS_ROOT + ' does not exist.\n' + RESET)
     sys.stdout.write('Possible reasons for this:\n')
     sys.stdout.write('    1) You are not running this tool from the RDBMS project root directory.\n')
-    sys.stdout.write('    2) Your `RDBMS_ROOT` directory is set incorrectly.\n')
+    sys.stdout.write('    2) Your path argument directory is set incorrectly.\n')
     sys.stdout.write('    3) You have not checked out your code on this machine.\n')
     sys.stdout.write('Please fix the problem and try again.\n')
     sys.stdout.flush()
@@ -62,7 +73,7 @@ if not os.path.exists(TESTS_PATH):
     sys.stdout.write(RED + 'Tests directory ' + TESTS_PATH + ' does not exist.\n' + RESET)
     sys.stdout.write('Possible reasons for this:\n')
     sys.stdout.write('    1) You are not running this tool from the RDBMS project root directory.\n')
-    sys.stdout.write('    2) Your `RDBMS_ROOT` directory is set incorrectly.\n')
+    sys.stdout.write('    2) Your path argument directory is set incorrectly.\n')
     sys.stdout.write('    3) Your `RDBMS_DEBUG` setting is configured incorrectly (try a different number from 0-3).\n')
     sys.stdout.write('    4) You have not created a directory called ' + TESTS_PATHS[RDBMS_DEBUG] + ' in your RDBMS project root directory.\n')
     sys.stdout.write('Please fix the problem and try again.\n')
@@ -75,7 +86,7 @@ def error_no_binary(name, path):
     sys.stdout.write('    1) You have not compiled the binary.\n')
     sys.stdout.write('    2) There was a compilation error the last time you built your project.\n')
     sys.stdout.write('    3) You are not running this tool from the RDBMS project root directory.\n')
-    sys.stdout.write('    4) Your `RDBMS_ROOT` directory is set incorrectly.\n')
+    sys.stdout.write('    4) Your path argument directory is set incorrectly.\n')
     sys.stdout.write('Please fix the problem and try again.\n')
     sys.stdout.flush()
     exit()
@@ -99,10 +110,13 @@ sys.stdout.write('---\n\n')
 sys.stdout.write('Your current working directory is ' + RDBMS_ROOT + '\n')
 sys.stdout.write('\n')
 sys.stdout.write('    Optional environment variables:\n')
-sys.stdout.write('    - RDBMS_ROOT: The root RDBMS project directory (defaults to pwd)\n')
 sys.stdout.write('    - RDBMS_DEBUG: 0, 1 - run tests from "$RDBMS_ROOT/project_tests"\n')
 sys.stdout.write('                   2 - run tests from "$RDBMS_ROOT/project_tests_1M"\n')
-sys.stdout.write('                   3 - run tests from "$RDBMS_ROOT/project_tests_100M"\n')
+sys.stdout.write('                       you can find these tests online\n')
+sys.stdout.write('                   3 - run tests from "$RDBMS_ROOT/project_tests_10M"\n')
+sys.stdout.write('                       you can generate these tests using generate.py\n')
+sys.stdout.write('                   4 - run tests from "$RDBMS_ROOT/project_tests_100M"\n')
+sys.stdout.write('                       you can generate these tests using generate.py\n')
 sys.stdout.write('\n')
 sys.stdout.write('Tests will be run on .dsl files in `' + TESTS_PATH + '` on the following files:\n')
 sys.stdout.write(str(test_files) + '\n\n')
@@ -174,7 +188,13 @@ def check_performance(test_file, test_time):
                         (expected_time, PARALLEL_PERF_REFERENCE_TEST, expected_time_mul))
         exit()
 
+current_test = 0
+
 for test_file in test_files:
+    current_test += 1
+    if current_test < START_TEST or current_test > END_TEST:
+        continue
+
     if server is None or server.poll() is not None:
         server = popen_server() 
 
