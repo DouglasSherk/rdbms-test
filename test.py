@@ -8,6 +8,7 @@ import time
 import atexit
 import datetime
 import argparse
+import multiprocessing
 
 parser = argparse.ArgumentParser(description='Runs tests for RDBMS')
 parser.add_argument('--start', type=int, default=1, choices=range(1, 42), help='the test at which to start')
@@ -51,8 +52,22 @@ PARALLEL_PERF_REFERENCE_TEST = 'test16'
 
 PARALLEL_PERF_FUZZ = 1.2
 
+"""
+Percentages of total execution time at each scale which can be parallelized.
+"""
+PARALLEL_PERF_SCALES = {
+    '0': 0.2,
+    '1': 0.2,
+    '2': 0.4,
+    '3': 1.0,
+    '4': 1.0,
+}
+
+"""
+Percentages of total execution time for each test which can be parallelized.
+"""
 PARALLEL_PERF_TESTS = {
-    'test17': 0.5,
+    'test17': 0.75,
 }
 
 TESTS_PATH = os.path.join(RDBMS_ROOT, TESTS_PATHS[RDBMS_DEBUG])
@@ -188,13 +203,17 @@ def check_performance(test_file, test_time):
     if not RUN_PERF_TESTS or test_file not in PARALLEL_PERF_TESTS:
         return
 
-    expected_time_mul = PARALLEL_PERF_TESTS[test_file]
-    expected_time = parallel_perf_reference_time * expected_time_mul
+    parallelizable_test_mul = PARALLEL_PERF_TESTS[test_file]
+    parallelizable_scale_mul = PARALLEL_PERF_SCALES[RDBMS_DEBUG]
+    parallelizable_mul = parallelizable_test_mul * parallelizable_scale_mul
+    expected_time = (1 - parallelizable_mul) * parallel_perf_reference_time + \
+                    parallelizable_mul * parallel_perf_reference_time / multiprocessing.cpu_count()
+
     if test_time > expected_time * PARALLEL_PERF_FUZZ:
         print_failure(test_file,
                       test_time,
-                      'Expected to take %d ms at most (%s * %.2f); did you implement parallel scanning?' %
-                        (expected_time, PARALLEL_PERF_REFERENCE_TEST, expected_time_mul))
+                      'Expected to take %d ms at most (%s * %f\% parallelizable)' %
+                        (expected_time, PARALLEL_PERF_REFERENCE_TEST, int(parallelizable_mul * 100)))
 
 current_test = 0
 
