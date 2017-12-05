@@ -210,6 +210,9 @@ def check_performance(test_file, test_time):
                     parallelizable_mul * parallel_perf_reference_time / multiprocessing.cpu_count()
 
     if test_time > expected_time * PARALLEL_PERF_FUZZ:
+        print(expected_time)
+        print(PARALLEL_PERF_REFERENCE_TEST)
+        print(int(parallelizable_mul * 100))
         print_failure(test_file,
                       test_time,
                       'Expected to take %d ms at most (%s * %f\% parallelizable)' %
