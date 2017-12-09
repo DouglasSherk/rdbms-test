@@ -280,20 +280,35 @@ for test_file in test_files:
         diffs = difflib.unified_diff(reference_output, test_output, fromfile='reference', tofile='test', lineterm='', n=0)
 
         if next(diffs, None) is not None:
-            reason = ''
-            line_count = 0
-            for line in diffs:
-                for prefix in ('---', '+++', '@@'):
-                    if line.startswith(prefix):
+            reference_output.sort()
+            test_output.sort()
+
+            diffs = difflib.unified_diff(reference_output, test_output, fromfile='reference', tofile='test', lineterm='', n=0)
+
+            if next(diffs, None) is not None:
+                reason = ''
+                line_count = 0
+                for line in diffs:
+                    for prefix in ('---', '+++', '@@'):
+                        if line.startswith(prefix):
+                            break
+                    else:
+                        reason = reason + line + '\n'
+
+                    line_count += 1
+                    if line_count >= 50:
                         break
+
+                print_failure(test_file, test_time, reason)
+
+            # lolol this code is bad
+            else:
+                if not RUN_PERF_TESTS and test_file in PARALLEL_PERF_TESTS:
+                    print_warning(test_file, test_time, ('This is a performance '
+                        'test, but performance tests are not running. See '
+                        '"WARNING" message at top of output.'))
                 else:
-                    reason = reason + line + '\n'
-
-                line_count += 1
-                if line_count >= 50:
-                    break
-
-            print_failure(test_file, test_time, reason)
+                    print_success(test_file, test_time)
         else:
             if not RUN_PERF_TESTS and test_file in PARALLEL_PERF_TESTS:
                 print_warning(test_file, test_time, ('This is a performance '
