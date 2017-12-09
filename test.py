@@ -222,8 +222,8 @@ current_test = 0
 
 for test_file in test_files:
     current_test += 1
-    # The two tests are imperative because they create the DB and load the base data.
-    if current_test not in [1, 2] and (current_test < START_TEST or current_test > END_TEST):
+    # The shutdown tests are imperative because they create the DB and load the base data.
+    if test_file not in SHUTDOWN_TESTS and (current_test < START_TEST or current_test > END_TEST):
         continue
 
     if server is None or server.poll() is not None:
