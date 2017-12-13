@@ -11,9 +11,13 @@ import argparse
 import multiprocessing
 
 parser = argparse.ArgumentParser(description='Runs tests for RDBMS')
-parser.add_argument('--start', type=int, default=1, choices=range(1, 42), help='the test at which to start')
-parser.add_argument('--end', type=int, default=41, choices=range(1, 42), help='the test at which to end')
+# Temporarily disable ranges so you can add your own queries.
+# parser.add_argument('--start', type=int, default=1, choices=range(1, 42), help='the test at which to start')
+# parser.add_argument('--end', type=int, default=41, choices=range(1, 42), help='the test at which to end')
+parser.add_argument('--start', type=int, default=1, help='the test at which to start')
+parser.add_argument('--end', type=int, default=41, help='the test at which to end')
 parser.add_argument('--timing-only', action='store_true', help='output only times; continue on when tests fail')
+parser.add_argument('--skip-load', action='store_true', help='skip data loading tests')
 parser.add_argument('path', nargs='*', default='.', help='the root project directory from which to run the tests')
 args = parser.parse_args()
 
@@ -68,6 +72,9 @@ Percentages of total execution time for each test which can be parallelized.
 """
 PARALLEL_PERF_TESTS = {
     'test17': 0.75,
+}
+
+PERF_TESTS = {
 }
 
 TESTS_PATH = os.path.join(RDBMS_ROOT, TESTS_PATHS[RDBMS_DEBUG])
@@ -223,7 +230,7 @@ current_test = 0
 for test_file in test_files:
     current_test += 1
     # The shutdown tests are imperative because they create the DB and load the base data.
-    if test_file not in SHUTDOWN_TESTS and (current_test < START_TEST or current_test > END_TEST):
+    if (test_file not in SHUTDOWN_TESTS or args.skip_load) and (current_test < START_TEST or current_test > END_TEST):
         continue
 
     if server is None or server.poll() is not None:
